@@ -1,0 +1,4 @@
+*.bak
+/Debug
+/Release
+/.settings
