@@ -53,7 +53,8 @@ static uint8_t mic[16];
 
 void SystemClock_Config(void);
 static char hex_to_str(uint8_t hex);
-static void send_hex_data(uint8_t* data, size_t length);
+static void send_hex_data(const uint8_t* data, size_t length);
+static void send_text(const char* text);
 
 /* Private user code ---------------------------------------------------------*/
 
@@ -112,7 +113,7 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\nctr: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(cipher_data, LENGTH);
 
 
@@ -122,9 +123,9 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\ngcm_e: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(cipher_data, LENGTH);
-        HAL_UART_Transmit(&hlpuart1, "\n", 1, HAL_MAX_DELAY);
+        send_text("\n");
         send_hex_data(mic, 16);
 
         t0 = DWT->CYCCNT;
@@ -133,9 +134,9 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\ngcm_d: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(plain_data, LENGTH);
-        HAL_UART_Transmit(&hlpuart1, "\n", 1, HAL_MAX_DELAY);
+        send_text("\n");
         send_hex_data(mic, 16);
 
 
@@ -148,7 +149,7 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\nctr_sw: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(cipher_data, LENGTH);
 
 
@@ -158,9 +159,9 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\ngcm_sw_e: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(cipher_data, LENGTH);
-        HAL_UART_Transmit(&hlpuart1, "\n", 1, HAL_MAX_DELAY);
+        send_text("\n");
         send_hex_data(&cipher_data[256], 16);
         //      send_hex_data(mic, 16);
 
@@ -170,9 +171,9 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "\ngcm_sw_d: t = %lu, r = %i\n", t, result);
-        HAL_UART_Transmit(&hlpuart1, text, strlen(text), HAL_MAX_DELAY);
+        send_text(text);
         send_hex_data(plain_data, LENGTH);
-        HAL_UART_Transmit(&hlpuart1, "\n", 1, HAL_MAX_DELAY);
+        send_text("\n");
         //      send_hex_data(mic, 16);
         //      send_hex_data(&cipher_data[256], 16);
     }
@@ -230,7 +231,7 @@ static char hex_to_str(uint8_t hex)
 	}
 }
 
-static void send_hex_data(uint8_t* data, size_t length)
+static void send_hex_data(const uint8_t* data, size_t length)
 {
 	uint8_t hex[2*LENGTH+32];
 	for (int i = 0; i < length; i++) {
@@ -239,6 +240,12 @@ static void send_hex_data(uint8_t* data, size_t length)
 	}
 	HAL_UART_Transmit(&hlpuart1, hex, 2*length, HAL_MAX_DELAY);
 }
+
+static void send_text(const char* text)
+{
+    HAL_UART_Transmit(&hlpuart1, (const uint8_t*)text, strlen(text), HAL_MAX_DELAY);
+}
+
 
 /**
   * @brief  This function is executed in case of error occurrence.
