@@ -102,9 +102,7 @@ int main(void)
 
     bool result;
     while (1) {
-
         HAL_Delay(1000);
-
 
 
         t0 = DWT->CYCCNT;
@@ -112,9 +110,10 @@ int main(void)
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\nctr: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_hw_ctr_enc: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(cipher_data, LENGTH);
+        send_text("\n\n");
 
 
         t0 = DWT->CYCCNT;
@@ -122,25 +121,25 @@ int main(void)
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\ngcm_e: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_hw_gcm_enc: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(cipher_data, LENGTH);
-        send_text("\n");
+        send_text("\nMIC = ");
         send_hex_data(mic, 16);
+        send_text("\n\n");
+
 
         t0 = DWT->CYCCNT;
         result = aes_hw_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\ngcm_d: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_hw_gcm_dec: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(plain_data, LENGTH);
-        send_text("\n");
+        send_text("\nMIC = ");
         send_hex_data(mic, 16);
-
-
-
+        send_text("\n\n");
 
 
         t0 = DWT->CYCCNT;
@@ -148,9 +147,10 @@ int main(void)
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\nctr_sw: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_sw_ctr_enc: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(cipher_data, LENGTH);
+        send_text("\n\n");
 
 
         t0 = DWT->CYCCNT;
@@ -158,24 +158,23 @@ int main(void)
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\ngcm_sw_e: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_sw_gcm_enc: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(cipher_data, LENGTH);
-        send_text("\n");
+        send_text("\nMIC = ");
         send_hex_data(&cipher_data[256], 16);
-        //      send_hex_data(mic, 16);
+        send_text("\n\n");
+
 
         t0 = DWT->CYCCNT;
         result = aes_sw_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
-        sprintf(text, "\ngcm_sw_d: t = %lu, r = %i\n", t, result);
+        sprintf(text, "aes_sw_gcm_dec: t = %lu, result = %i\n", t, result);
         send_text(text);
         send_hex_data(plain_data, LENGTH);
-        send_text("\n");
-        //      send_hex_data(mic, 16);
-        //      send_hex_data(&cipher_data[256], 16);
+        send_text("\n\n");
     }
 }
 

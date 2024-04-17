@@ -34,7 +34,8 @@ static const char auth_header[] = "0123456789ABCDEF";
 
 /* Public functions ----------------------------------------------------------*/
 
-void aes_hw_init(void) {
+void aes_hw_init(void)
+{
     __HAL_RCC_AES_CLK_ENABLE();
     __HAL_RCC_AES_FORCE_RESET();
     __HAL_RCC_AES_RELEASE_RESET();
@@ -45,7 +46,8 @@ void aes_hw_init(void) {
     }
 }
 
-bool aes_hw_ctr_encrypt(uint8_t* key, uint8_t* init_vector, const uint8_t* plain_data, uint32_t length, uint8_t* cipher_data) {
+bool aes_hw_ctr_encrypt(uint8_t* key, uint8_t* init_vector, const uint8_t* plain_data, uint32_t length, uint8_t* cipher_data)
+{
     hcryp.Init.DataType = CRYP_DATATYPE_8B;
     hcryp.Init.KeySize  = CRYP_KEYSIZE_128B;
     hcryp.Init.pKey = key;

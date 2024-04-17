@@ -48,7 +48,8 @@ static const char auth_header[] = "0123456789ABCDEF";
 
 /* Public functions ----------------------------------------------------------*/
 
-void aes_sw_init(void) {
+void aes_sw_init(void)
+{
     if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS) {
         assert(false);
     }
