@@ -73,7 +73,6 @@ int main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_LPUART1_UART_Init();
-    __HAL_RCC_AES_CLK_ENABLE();
 
     // for counting cycle, init
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
