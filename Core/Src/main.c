@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -15,43 +14,32 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "aes_hw.h"
 #include "aes_sw.h"
-/* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 #define KEY "0123456789ABCDEF"
 //#define INIT_VECTOR "0123456789abcdef"
 
 #define LENGTH 256
-/* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
 
 const uint8_t INIT_VECTOR[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x00, 0x00, 0x00//, 0x0c, 0x0d, 0x0e, 0x0f
@@ -60,18 +48,14 @@ const uint8_t INIT_VECTOR[] = {
 static uint8_t plain_data[LENGTH + 16];
 static uint8_t cipher_data[LENGTH + 16];
 static uint8_t mic[16];
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 static char hex_to_str(uint8_t hex);
 static void send_hex_data(uint8_t* data, size_t length);
-/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -79,30 +63,16 @@ static void send_hex_data(uint8_t* data, size_t length);
   */
 int main(void)
 {
-    /* USER CODE BEGIN 1 */
-
-    /* USER CODE END 1 */
-
     /* MCU Configuration--------------------------------------------------------*/
 
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
     HAL_Init();
 
-    /* USER CODE BEGIN Init */
-
-    /* USER CODE END Init */
-
-    /* Configure the system clock */
     SystemClock_Config();
-
-    /* USER CODE BEGIN SysInit */
-
-    /* USER CODE END SysInit */
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_LPUART1_UART_Init();
-    /* USER CODE BEGIN 2 */
     __HAL_RCC_AES_CLK_ENABLE();
 
     // for counting cycle, init
@@ -130,13 +100,8 @@ int main(void)
     aes_hw_init();
     aes_sw_init();
 
-    /* USER CODE END 2 */
-
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
     bool result;
-    while (1)
-    {
+    while (1) {
 
         HAL_Delay(1000);
 
@@ -211,13 +176,7 @@ int main(void)
         HAL_UART_Transmit(&hlpuart1, "\n", 1, HAL_MAX_DELAY);
         //      send_hex_data(mic, 16);
         //      send_hex_data(&cipher_data[256], 16);
-
-
-        /* USER CODE END WHILE */
-
-        /* USER CODE BEGIN 3 */
     }
-    /* USER CODE END 3 */
 }
 
 /**
@@ -272,7 +231,6 @@ static char hex_to_str(uint8_t hex)
 	}
 }
 
-/* USER CODE BEGIN 4 */
 static void send_hex_data(uint8_t* data, size_t length)
 {
 	uint8_t hex[2*LENGTH+32];
@@ -282,7 +240,6 @@ static void send_hex_data(uint8_t* data, size_t length)
 	}
 	HAL_UART_Transmit(&hlpuart1, hex, 2*length, HAL_MAX_DELAY);
 }
-/* USER CODE END 4 */
 
 /**
   * @brief  This function is executed in case of error occurrence.
