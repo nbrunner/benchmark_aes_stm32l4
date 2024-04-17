@@ -27,7 +27,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "aes.h"
+#include "aes_hw.h"
+#include "aes_sw.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -126,7 +127,7 @@ int main(void)
         plain_data[i] = i;
     }
 
-    aes_init();
+    aes_hw_init();
     aes_sw_init();
 
     /* USER CODE END 2 */
@@ -142,7 +143,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_ctr_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data);
+        result = aes_hw_ctr_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -152,7 +153,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_gcm_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data, mic);
+        result = aes_hw_gcm_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -163,7 +164,7 @@ int main(void)
         send_hex_data(mic, 16);
 
         t0 = DWT->CYCCNT;
-        result = aes_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
+        result = aes_hw_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
