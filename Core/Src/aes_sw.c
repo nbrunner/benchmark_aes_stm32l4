@@ -40,6 +40,7 @@
 #define ALGO_GCM_DEC CMOX_AESSMALL_GCMSMALL_DEC_ALGO
 #endif
 
+#define MIC_SIZE 16
 #define AUTH_HEADER_SIZE 16
 
 /* Private variables ---------------------------------------------------------*/
@@ -74,7 +75,7 @@ bool aes_sw_gcm_encrypt(uint8_t* key, uint8_t* init_vector, const uint8_t* plain
 
     retval = cmox_aead_encrypt(ALGO_GCM_ENC,
             plain_data, length,
-            16,
+            MIC_SIZE,
             key, AES_SIZE,
             init_vector, GCM_IV_SIZE,
             auth_header, AUTH_HEADER_SIZE,
@@ -88,8 +89,8 @@ bool aes_sw_gcm_decrypt(uint8_t* key, uint8_t* init_vector, const uint8_t* ciphe
     cmox_cipher_retval_t retval;
 
     retval = cmox_aead_decrypt(ALGO_GCM_DEC,
-            cipher_data, length+16,
-            16,
+            cipher_data, length + MIC_SIZE,
+            MIC_SIZE,
             key, AES_SIZE,
             init_vector, GCM_IV_SIZE,
             auth_header, AUTH_HEADER_SIZE,
