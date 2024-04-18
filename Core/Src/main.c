@@ -28,26 +28,46 @@
 
 #include "aes_hw.h"
 #include "aes_sw.h"
+#include "cmox_crypto.h"
 
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define KEY "0123456789ABCDEF"
 
+#define AES_SIZE 16 // 128 bits
 #define LENGTH 256
 #define MIC_SIZE 16
+#define AEAD_IV_SIZE 12 // 96 bits
+#define AUTH_HEADER_SIZE 16
+
+#define AEAD_NUMBER 7
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 
-const uint8_t INIT_VECTOR[] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x00, 0x00, 0x00//, 0x0c, 0x0d, 0x0e, 0x0f
+const uint8_t init_vector[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x00, 0x00, 0x00,
 };
+const uint8_t key[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+};
+static const char auth_header[] = "0123456789ABCDEF";
 
 static uint8_t plain_data[LENGTH + MIC_SIZE];
 static uint8_t cipher_data[LENGTH + MIC_SIZE];
 static uint8_t mic[MIC_SIZE];
+
+static char* aead_names[AEAD_NUMBER] = {
+        "CMOX_AESFAST_GCMFAST",
+        "CMOX_AESFAST_GCMSMALL",
+        "CMOX_AESSMALL_GCMFAST",
+        "CMOX_AESSMALL_GCMSMALL",
+        "CMOX_AESFAST_CCM",
+        "CMOX_AESSMALL_CCM",
+        "CMOX_CHACHAPOLY",
+};
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -64,6 +84,26 @@ static void send_text(const char* text);
   */
 int main(void)
 {
+    cmox_aead_algo_t aead_encs[AEAD_NUMBER] = {
+            CMOX_AESFAST_GCMFAST_ENC_ALGO,
+            CMOX_AESFAST_GCMSMALL_ENC_ALGO,
+            CMOX_AESSMALL_GCMFAST_ENC_ALGO,
+            CMOX_AESSMALL_GCMSMALL_ENC_ALGO,
+            CMOX_AESFAST_CCM_ENC_ALGO,
+            CMOX_AESSMALL_CCM_ENC_ALGO,
+            CMOX_CHACHAPOLY_ENC_ALGO,
+    };
+
+    cmox_aead_algo_t aead_decs[AEAD_NUMBER] = {
+            CMOX_AESFAST_GCMFAST_DEC_ALGO,
+            CMOX_AESFAST_GCMSMALL_DEC_ALGO,
+            CMOX_AESSMALL_GCMFAST_DEC_ALGO,
+            CMOX_AESSMALL_GCMSMALL_DEC_ALGO,
+            CMOX_AESFAST_CCM_DEC_ALGO,
+            CMOX_AESSMALL_CCM_DEC_ALGO,
+            CMOX_CHACHAPOLY_DEC_ALGO,
+    };
+
     /* MCU Configuration--------------------------------------------------------*/
 
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -106,7 +146,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_hw_ctr_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data);
+        result = aes_hw_ctr_encrypt(key, init_vector, plain_data, LENGTH, cipher_data);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -117,7 +157,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_hw_gcm_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data, mic);
+        result = aes_hw_gcm_encrypt(key, init_vector, plain_data, LENGTH, cipher_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -130,7 +170,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_hw_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
+        result = aes_hw_gcm_decrypt(key, init_vector, cipher_data, LENGTH, plain_data, mic);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -143,7 +183,7 @@ int main(void)
 
 
         t0 = DWT->CYCCNT;
-        result = aes_sw_ctr_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data);
+        result = aes_sw_ctr_encrypt(key, init_vector, plain_data, LENGTH, cipher_data);
         t1 = DWT->CYCCNT;
         t = t1 - t0 - measure_delay;
 
@@ -153,28 +193,46 @@ int main(void)
         send_text("\n\n");
 
 
-        t0 = DWT->CYCCNT;
-        result = aes_sw_gcm_encrypt(KEY, INIT_VECTOR, plain_data, LENGTH, cipher_data, mic);
-        t1 = DWT->CYCCNT;
-        t = t1 - t0 - measure_delay;
+        for (int i = 0; i < AEAD_NUMBER; i++) {
+            cmox_cipher_retval_t retval;
+            size_t key_size = aead_encs[i] == CMOX_CHACHAPOLY_ENC_ALGO ? 32 : 16;
 
-        sprintf(text, "aes_sw_gcm_enc: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(cipher_data, LENGTH);
-        send_text("\nMIC = ");
-        send_hex_data(&cipher_data[256], 16);
-        send_text("\n\n");
+            t0 = DWT->CYCCNT;
+            retval = cmox_aead_encrypt(aead_encs[i],
+                    plain_data, LENGTH,
+                    MIC_SIZE,
+                    key, key_size,
+                    init_vector, AEAD_IV_SIZE,
+                    auth_header, AUTH_HEADER_SIZE,
+                    cipher_data, NULL);
+            t1 = DWT->CYCCNT;
+            t = t1 - t0 - measure_delay;
+            result = retval == CMOX_CIPHER_SUCCESS;
 
+            sprintf(text, "%s_enc: t = %lu, result = %i\n", aead_names[i], t, result);
+            send_text(text);
+            send_hex_data(cipher_data, LENGTH);
+            send_text("\nMIC = ");
+            send_hex_data(&cipher_data[256], 16);
+            send_text("\n\n");
 
-        t0 = DWT->CYCCNT;
-        result = aes_sw_gcm_decrypt(KEY, INIT_VECTOR, cipher_data, LENGTH, plain_data, mic);
-        t1 = DWT->CYCCNT;
-        t = t1 - t0 - measure_delay;
+            t0 = DWT->CYCCNT;
+            retval = cmox_aead_decrypt(aead_decs[i],
+                    cipher_data, LENGTH + MIC_SIZE,
+                    MIC_SIZE,
+                    key, key_size,
+                    init_vector, AEAD_IV_SIZE,
+                    auth_header, AUTH_HEADER_SIZE,
+                    plain_data, NULL);
+            t1 = DWT->CYCCNT;
+            t = t1 - t0 - measure_delay;
+            result = retval == CMOX_CIPHER_AUTH_SUCCESS;
 
-        sprintf(text, "aes_sw_gcm_dec: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(plain_data, LENGTH);
-        send_text("\n\n");
+            sprintf(text, "%s_dec: t = %lu, result = %i\n", aead_names[i], t, result);
+            send_text(text);
+            send_hex_data(plain_data, LENGTH);
+            send_text("\n\n");
+        }
     }
 }
 
