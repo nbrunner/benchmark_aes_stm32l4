@@ -33,9 +33,9 @@
 
 /* Private define ------------------------------------------------------------*/
 #define KEY "0123456789ABCDEF"
-//#define INIT_VECTOR "0123456789abcdef"
 
 #define LENGTH 256
+#define MIC_SIZE 16
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -45,9 +45,9 @@ const uint8_t INIT_VECTOR[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x00, 0x00, 0x00//, 0x0c, 0x0d, 0x0e, 0x0f
 };
 
-static uint8_t plain_data[LENGTH + 16];
-static uint8_t cipher_data[LENGTH + 16];
-static uint8_t mic[16];
+static uint8_t plain_data[LENGTH + MIC_SIZE];
+static uint8_t cipher_data[LENGTH + MIC_SIZE];
+static uint8_t mic[MIC_SIZE];
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -232,7 +232,7 @@ static char hex_to_str(uint8_t hex)
 
 static void send_hex_data(const uint8_t* data, size_t length)
 {
-	uint8_t hex[2*LENGTH+32];
+	uint8_t hex[2 * (LENGTH + MIC_SIZE)];
 	for (int i = 0; i < length; i++) {
 		hex[2*i] = hex_to_str((data[i] & 0xF0) >> 4);
 		hex[2*i + 1] = hex_to_str(data[i] & 0x0F);
