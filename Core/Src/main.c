@@ -37,9 +37,11 @@
 #define AES_SIZE 16 // 128 bits
 #define LENGTH 256
 #define MIC_SIZE 16
+#define CIPHER_IV_SIZE 16 // 128 bits
 #define AEAD_IV_SIZE 12 // 96 bits
 #define AUTH_HEADER_SIZE 16
 
+#define CIPHER_NUMBER 12
 #define AEAD_NUMBER 7
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,6 +60,21 @@ static const char auth_header[] = "0123456789ABCDEF";
 static uint8_t plain_data[LENGTH + MIC_SIZE];
 static uint8_t cipher_data[LENGTH + MIC_SIZE];
 static uint8_t mic[MIC_SIZE];
+
+static char* cipher_names[CIPHER_NUMBER] = {
+        "CMOX_AESFAST_ECB",
+        "CMOX_AESFAST_CBC",
+        "CMOX_AESFAST_CTR",
+        "CMOX_AESFAST_CFB",
+        "CMOX_AESFAST_OFB",
+        "CMOX_AESFAST_XTS",
+        "CMOX_AESSMALL_ECB",
+        "CMOX_AESSMALL_CBC",
+        "CMOX_AESSMALL_CTR",
+        "CMOX_AESSMALL_CFB",
+        "CMOX_AESSMALL_OFB",
+        "CMOX_AESSMALL_XTS",
+};
 
 static char* aead_names[AEAD_NUMBER] = {
         "CMOX_AESFAST_GCMFAST",
@@ -84,6 +101,36 @@ static void send_text(const char* text);
   */
 int main(void)
 {
+    cmox_cipher_algo_t cipher_encs[CIPHER_NUMBER] = {
+            CMOX_AESFAST_ECB_ENC_ALGO,
+            CMOX_AESFAST_CBC_ENC_ALGO,
+            CMOX_AESFAST_CTR_ENC_ALGO,
+            CMOX_AESFAST_CFB_ENC_ALGO,
+            CMOX_AESFAST_OFB_ENC_ALGO,
+            CMOX_AESFAST_XTS_ENC_ALGO,
+            CMOX_AESSMALL_ECB_ENC_ALGO,
+            CMOX_AESSMALL_CBC_ENC_ALGO,
+            CMOX_AESSMALL_CTR_ENC_ALGO,
+            CMOX_AESSMALL_CFB_ENC_ALGO,
+            CMOX_AESSMALL_OFB_ENC_ALGO,
+            CMOX_AESSMALL_XTS_ENC_ALGO,
+    };
+
+    cmox_cipher_algo_t cipher_decs[CIPHER_NUMBER] = {
+            CMOX_AESFAST_ECB_DEC_ALGO,
+            CMOX_AESFAST_CBC_DEC_ALGO,
+            CMOX_AESFAST_CTR_DEC_ALGO,
+            CMOX_AESFAST_CFB_DEC_ALG,
+            CMOX_AESFAST_OFB_DEC_ALGO,
+            CMOX_AESFAST_XTS_DEC_ALGO,
+            CMOX_AESSMALL_ECB_DEC_ALGO,
+            CMOX_AESSMALL_CBC_DEC_ALGO,
+            CMOX_AESSMALL_CTR_DEC_ALGO,
+            CMOX_AESSMALL_CFB_DEC_ALGO,
+            CMOX_AESSMALL_OFB_DEC_ALGO,
+            CMOX_AESSMALL_XTS_DEC_ALGO,
+    };
+
     cmox_aead_algo_t aead_encs[AEAD_NUMBER] = {
             CMOX_AESFAST_GCMFAST_ENC_ALGO,
             CMOX_AESFAST_GCMSMALL_ENC_ALGO,
@@ -182,16 +229,41 @@ int main(void)
         send_text("\n\n");
 
 
-        t0 = DWT->CYCCNT;
-        result = aes_sw_ctr_encrypt(key, init_vector, plain_data, LENGTH, cipher_data);
-        t1 = DWT->CYCCNT;
-        t = t1 - t0 - measure_delay;
 
-        sprintf(text, "aes_sw_ctr_enc: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(cipher_data, LENGTH);
-        send_text("\n\n");
+        for (int i = 0; i < CIPHER_NUMBER; i++) {
+            cmox_cipher_retval_t retval;
+            size_t key_size = 16;
 
+            t0 = DWT->CYCCNT;
+            retval = cmox_cipher_encrypt(cipher_encs[i],
+                    plain_data, LENGTH,
+                    key, key_size,
+                    init_vector, CIPHER_IV_SIZE,
+                    cipher_data, NULL);
+            t1 = DWT->CYCCNT;
+            t = t1 - t0 - measure_delay;
+            result = retval == CMOX_CIPHER_SUCCESS;
+
+            sprintf(text, "%s_enc: t = %lu, result = %i\n", cipher_names[i], t, result);
+            send_text(text);
+            send_hex_data(cipher_data, LENGTH);
+            send_text("\n\n");
+
+            t0 = DWT->CYCCNT;
+            retval = cmox_cipher_decrypt(cipher_decs[i],
+                    cipher_data, LENGTH + MIC_SIZE,
+                    key, key_size,
+                    init_vector, CIPHER_IV_SIZE,
+                    plain_data, NULL);
+            t1 = DWT->CYCCNT;
+            t = t1 - t0 - measure_delay;
+            result = retval == CMOX_CIPHER_SUCCESS;
+
+            sprintf(text, "%s_dec: t = %lu, result = %i\n", cipher_names[i], t, result);
+            send_text(text);
+            send_hex_data(plain_data, LENGTH);
+            send_text("\n\n");
+        }
 
         for (int i = 0; i < AEAD_NUMBER; i++) {
             cmox_cipher_retval_t retval;
