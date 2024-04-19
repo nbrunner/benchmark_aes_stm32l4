@@ -238,7 +238,7 @@ int main(void)
 
             t0 = DWT->CYCCNT;
             retval = cmox_cipher_decrypt(cipher_decs[i],
-                    cipher_data, LENGTH + MIC_SIZE,
+                    cipher_data, LENGTH,
                     key, key_size,
                     init_vector, CIPHER_IV_SIZE,
                     plain_data, NULL);
