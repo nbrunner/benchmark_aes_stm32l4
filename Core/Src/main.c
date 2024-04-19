@@ -41,21 +41,23 @@
 #define AEAD_IV_SIZE 12 // 96 bits
 #define AUTH_HEADER_SIZE 16
 
-#define CIPHER_NUMBER 12
+#define CIPHER_NUMBER 10
 #define AEAD_NUMBER 7
 
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 
-const uint8_t init_vector[] = {
+static const uint8_t init_vector[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x00, 0x00, 0x00, 0x00,
 };
-const uint8_t key[] = {
+static const uint8_t key[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 };
-static const char auth_header[] = "0123456789ABCDEF";
+static const uint8_t auth_header[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+};
 
 static uint8_t plain_data[LENGTH + MIC_SIZE];
 static uint8_t cipher_data[LENGTH + MIC_SIZE];
@@ -67,13 +69,11 @@ static char* cipher_names[CIPHER_NUMBER] = {
         "CMOX_AESFAST_CTR",
         "CMOX_AESFAST_CFB",
         "CMOX_AESFAST_OFB",
-        "CMOX_AESFAST_XTS",
         "CMOX_AESSMALL_ECB",
         "CMOX_AESSMALL_CBC",
         "CMOX_AESSMALL_CTR",
         "CMOX_AESSMALL_CFB",
         "CMOX_AESSMALL_OFB",
-        "CMOX_AESSMALL_XTS",
 };
 
 static char* aead_names[AEAD_NUMBER] = {
@@ -107,13 +107,11 @@ int main(void)
             CMOX_AESFAST_CTR_ENC_ALGO,
             CMOX_AESFAST_CFB_ENC_ALGO,
             CMOX_AESFAST_OFB_ENC_ALGO,
-            CMOX_AESFAST_XTS_ENC_ALGO,
             CMOX_AESSMALL_ECB_ENC_ALGO,
             CMOX_AESSMALL_CBC_ENC_ALGO,
             CMOX_AESSMALL_CTR_ENC_ALGO,
             CMOX_AESSMALL_CFB_ENC_ALGO,
             CMOX_AESSMALL_OFB_ENC_ALGO,
-            CMOX_AESSMALL_XTS_ENC_ALGO,
     };
 
     cmox_cipher_algo_t cipher_decs[CIPHER_NUMBER] = {
@@ -122,13 +120,11 @@ int main(void)
             CMOX_AESFAST_CTR_DEC_ALGO,
             CMOX_AESFAST_CFB_DEC_ALG,
             CMOX_AESFAST_OFB_DEC_ALGO,
-            CMOX_AESFAST_XTS_DEC_ALGO,
             CMOX_AESSMALL_ECB_DEC_ALGO,
             CMOX_AESSMALL_CBC_DEC_ALGO,
             CMOX_AESSMALL_CTR_DEC_ALGO,
             CMOX_AESSMALL_CFB_DEC_ALGO,
             CMOX_AESSMALL_OFB_DEC_ALGO,
-            CMOX_AESSMALL_XTS_DEC_ALGO,
     };
 
     cmox_aead_algo_t aead_encs[AEAD_NUMBER] = {
