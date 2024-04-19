@@ -44,6 +44,8 @@
 #define CIPHER_NUMBER 10
 #define AEAD_NUMBER 7
 
+#define SEND_DATA
+
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -92,6 +94,7 @@ void SystemClock_Config(void);
 static char hex_to_str(uint8_t hex);
 static void send_hex_data(const uint8_t* data, size_t length);
 static void send_text(const char* text);
+static void send_result(const char* text, const uint8_t* data, const uint8_t* mic);
 
 /* Private user code ---------------------------------------------------------*/
 
@@ -194,9 +197,7 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "aes_hw_ctr_enc: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(cipher_data, LENGTH);
-        send_text("\n\n");
+        send_result(text, cipher_data, NULL);
 
 
         t0 = DWT->CYCCNT;
@@ -205,11 +206,7 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "aes_hw_gcm_enc: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(cipher_data, LENGTH);
-        send_text("\nMIC = ");
-        send_hex_data(mic, 16);
-        send_text("\n\n");
+        send_result(text, cipher_data, mic);
 
 
         t0 = DWT->CYCCNT;
@@ -218,11 +215,7 @@ int main(void)
         t = t1 - t0 - measure_delay;
 
         sprintf(text, "aes_hw_gcm_dec: t = %lu, result = %i\n", t, result);
-        send_text(text);
-        send_hex_data(plain_data, LENGTH);
-        send_text("\nMIC = ");
-        send_hex_data(mic, 16);
-        send_text("\n\n");
+        send_result(text, plain_data, mic);
 
 
 
@@ -241,9 +234,7 @@ int main(void)
             result = retval == CMOX_CIPHER_SUCCESS;
 
             sprintf(text, "%s_enc: t = %lu, result = %i\n", cipher_names[i], t, result);
-            send_text(text);
-            send_hex_data(cipher_data, LENGTH);
-            send_text("\n\n");
+            send_result(text, cipher_data, NULL);
 
             t0 = DWT->CYCCNT;
             retval = cmox_cipher_decrypt(cipher_decs[i],
@@ -256,9 +247,7 @@ int main(void)
             result = retval == CMOX_CIPHER_SUCCESS;
 
             sprintf(text, "%s_dec: t = %lu, result = %i\n", cipher_names[i], t, result);
-            send_text(text);
-            send_hex_data(plain_data, LENGTH);
-            send_text("\n\n");
+            send_result(text, plain_data, NULL);
         }
 
         for (int i = 0; i < AEAD_NUMBER; i++) {
@@ -278,11 +267,7 @@ int main(void)
             result = retval == CMOX_CIPHER_SUCCESS;
 
             sprintf(text, "%s_enc: t = %lu, result = %i\n", aead_names[i], t, result);
-            send_text(text);
-            send_hex_data(cipher_data, LENGTH);
-            send_text("\nMIC = ");
-            send_hex_data(&cipher_data[256], 16);
-            send_text("\n\n");
+            send_result(text, cipher_data, mic);
 
             t0 = DWT->CYCCNT;
             retval = cmox_aead_decrypt(aead_decs[i],
@@ -297,9 +282,7 @@ int main(void)
             result = retval == CMOX_CIPHER_AUTH_SUCCESS;
 
             sprintf(text, "%s_dec: t = %lu, result = %i\n", aead_names[i], t, result);
-            send_text(text);
-            send_hex_data(plain_data, LENGTH);
-            send_text("\n\n");
+            send_result(text, plain_data, mic);
         }
     }
 }
@@ -369,6 +352,19 @@ static void send_hex_data(const uint8_t* data, size_t length)
 static void send_text(const char* text)
 {
     HAL_UART_Transmit(&hlpuart1, (const uint8_t*)text, strlen(text), HAL_MAX_DELAY);
+}
+
+static void send_result(const char* text, const uint8_t* data, const uint8_t* mic)
+{
+    send_text(text);
+#ifdef SEND_DATA
+    send_hex_data(data, LENGTH);
+    if (mic != NULL) {
+        send_text("\nMIC = ");
+        send_hex_data(mic, 16);
+    }
+    send_text("\n\n");
+#endif
 }
 
 
